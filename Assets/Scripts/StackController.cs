@@ -1,15 +1,40 @@
-using System;
 using UnityEngine;
+using UnityEngine.Events;
 
+[System.Serializable]
+public class PathEvent : UnityEvent<Vector3>{}
 public class StackController : MonoBehaviour
 {
+     #region Singleton
+
+     private static StackController _instance;
+
+     public static StackController Instance
+     {
+          get
+          {
+               if (_instance == null)
+               {
+                    _instance = GameObject.FindObjectOfType<StackController>();
+               }
+
+               return _instance;
+          }
+     }
+
+     #endregion
+     
+     
      [SerializeField] private Transform pathsParent;
      [SerializeField] private Transform pathPrefab;
+     [SerializeField] private float spawnSpan = 10,pathMoveSpeed = 5f;
      
      private int _path;
-     private float _transition = 0,_xDelta;
+     private float _xDelta;
      private Transform _currentPath;
      private Vector3 _lastPathPosition,_lastPathScale;
+
+     public PathEvent onPathPlaced = new PathEvent();
 
      private void Awake()
      {
@@ -17,12 +42,14 @@ public class StackController : MonoBehaviour
           _currentPath = pathsParent.GetChild(_path);
           _lastPathPosition = pathsParent.GetChild(_path - 1).localPosition;
           _lastPathScale = pathsParent.GetChild(_path - 1).localScale;
+          PlacePath();
      }
 
      private void Update()
      {
           if (Input.GetMouseButtonDown(0))
           {
+               SetSpawnSide();
                PlacePath();
           }
           MovePath();
@@ -30,9 +57,7 @@ public class StackController : MonoBehaviour
 
      void MovePath()
      {
-          _transition += Time.deltaTime;
-          float targetX = Mathf.Sin(_transition) * _currentPath.localScale.x + _lastPathPosition.x;
-          _currentPath.localPosition = new Vector3(targetX, 0, _currentPath.localPosition.z);
+          _currentPath.Translate(Vector3.left*Time.deltaTime*pathMoveSpeed);
      }
 
      void PlacePath()
@@ -40,6 +65,9 @@ public class StackController : MonoBehaviour
           _xDelta = _currentPath.localPosition.x - _lastPathPosition.x;
           _currentPath.localPosition = new Vector3(_lastPathPosition.x+_xDelta*.5f,0, _currentPath.localPosition.z);
           _currentPath.localScale -= Vector3.right*Mathf.Abs(_xDelta);
+          
+          onPathPlaced.Invoke(_currentPath.position);
+          
           CreateRubble();
           SpawnPath();
      }
@@ -50,7 +78,7 @@ public class StackController : MonoBehaviour
           _lastPathScale = _currentPath.localScale;
           Transform newPath = pathsParent.GetChild(0);
           newPath.localScale = _currentPath.localScale;
-          newPath.localPosition = _lastPathPosition + Vector3.forward * _lastPathScale.z;
+          newPath.localPosition = _lastPathPosition + Vector3.right*spawnSpan + Vector3.forward * _lastPathScale.z;
           newPath.SetSiblingIndex(_path);
           _currentPath = newPath;
      }
@@ -64,5 +92,11 @@ public class StackController : MonoBehaviour
                , _currentPath.position.y, _currentPath.position.z);
           Transform rubble = Instantiate(pathPrefab, rubblePos,Quaternion.identity);
           rubble.localScale = rubbleScale;
+     }
+
+     void SetSpawnSide()
+     {
+          spawnSpan *= -1;
+          pathMoveSpeed *= -1;
      }
 }
