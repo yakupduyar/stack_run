@@ -29,7 +29,7 @@ public class StackController : MonoBehaviour
      [SerializeField] private Transform pathPrefab;
      [SerializeField] private float spawnSpan = 10,pathMoveSpeed = 5f;
      
-     private int _path;
+     private int _path,_combo=0;
      private float _xDelta;
      private Transform _currentPath;
      private Vector3 _lastPathPosition,_lastPathScale;
@@ -55,24 +55,38 @@ public class StackController : MonoBehaviour
           MovePath();
      }
 
-     void MovePath()
+     private void MovePath()
      {
           _currentPath.Translate(Vector3.left*Time.deltaTime*pathMoveSpeed);
      }
 
-     void PlacePath()
+     private void PlacePath()
      {
           _xDelta = _currentPath.localPosition.x - _lastPathPosition.x;
-          _currentPath.localPosition = new Vector3(_lastPathPosition.x+_xDelta*.5f,0, _currentPath.localPosition.z);
-          _currentPath.localScale -= Vector3.right*Mathf.Abs(_xDelta);
+          
+          if (Mathf.Abs(_xDelta) < .1)
+          {
+               _combo++;
+               _currentPath.localPosition = new Vector3(_lastPathPosition.x,0, _currentPath.localPosition.z);
+          }
+          else if (Mathf.Abs(_xDelta) < _lastPathScale.x)
+          {
+               _combo = 0;
+               _currentPath.localPosition = new Vector3(_lastPathPosition.x+_xDelta*.5f,0, _currentPath.localPosition.z);
+               _currentPath.localScale -= Vector3.right*Mathf.Abs(_xDelta);
+               CreateRubble();
+          }
+          else
+          {
+               print("FAIL");
+               return;
+          }
           
           onPathPlaced.Invoke(_currentPath.position);
-          
-          CreateRubble();
           SpawnPath();
      }
 
-     void SpawnPath()
+     private void SpawnPath()
      {
           _lastPathPosition = _currentPath.localPosition;
           _lastPathScale = _currentPath.localScale;
@@ -83,7 +97,7 @@ public class StackController : MonoBehaviour
           _currentPath = newPath;
      }
 
-     void CreateRubble()
+     private void CreateRubble()
      {
           Vector3 rubbleScale = new Vector3(_lastPathScale.x - _currentPath.localScale.x, 1, _currentPath.localScale.z);
           Vector3 rubblePos =  new Vector3( (_xDelta>0) ?
@@ -94,7 +108,7 @@ public class StackController : MonoBehaviour
           rubble.localScale = rubbleScale;
      }
 
-     void SetSpawnSide()
+     private void SetSpawnSide()
      {
           spawnSpan *= -1;
           pathMoveSpeed *= -1;
