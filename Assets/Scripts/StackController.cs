@@ -39,6 +39,7 @@ public class StackController : MonoBehaviour
      private Vector3 _lastPathPosition,_lastPathScale;
 
      public bool PathCompleted => _pathCompleted;
+     public float PathLength => pathPrefab.localScale.z;
      
      public PathEvent onPathPlaced = new PathEvent();
      
@@ -49,11 +50,18 @@ public class StackController : MonoBehaviour
           _lastPathPosition = pathsParent.GetChild(_path - 1).localPosition;
           _lastPathScale = pathsParent.GetChild(_path - 1).localScale;
           GameManager.Instance.OnLevelStart.AddListener(OnLevelStart);
+          GameManager.Instance.OnLevelSuccess.AddListener(OnLevelSuccess);
      }
 
      private void OnLevelStart()
      {
           StartCoroutine(UpdateFrame());
+          PlacePath();
+     }
+     
+     private void OnLevelSuccess()
+     {
+          StopAllCoroutines();
           PlacePath();
      }
 
@@ -149,5 +157,10 @@ public class StackController : MonoBehaviour
      void LastPathPlaced()
      {
           pathMoveSpeed = 0;
+     }
+
+     public void NextLevel()
+     {
+          _lastPathPosition = LevelManager.Instance.StartPathPos;
      }
 }

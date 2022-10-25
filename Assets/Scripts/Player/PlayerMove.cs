@@ -76,6 +76,7 @@ public class PlayerMove : MonoBehaviour
             rb.isKinematic = false;
             rb.useGravity = true;
             CinemachineManager.Instance.StopTrack();
+            GameManager.Instance.Invoke("FailLevel",3);
         }
     }
 }
