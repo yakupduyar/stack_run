@@ -27,13 +27,12 @@ public class Player : MonoBehaviour
     public PlayerMove Move => playerMove;
     public PlayerAnimator Animator => playerAnimator;
 
-
     private void OnTriggerEnter(Collider other)
     {
         if (other.CompareTag("Finish"))
         {
             Animator.Dance();
-            playerMove.StopMove();
+            GameManager.Instance.SuccessLevel();
         }
     }
 }

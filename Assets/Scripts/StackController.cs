@@ -4,7 +4,7 @@ using UnityEngine;
 using UnityEngine.Events;
 
 [System.Serializable]
-public class PathEvent : UnityEvent<Vector3>{}
+public class PathEvent : UnityEvent<Vector3,int>{}
 public class StackController : MonoBehaviour
 {
      #region Singleton
@@ -30,28 +30,31 @@ public class StackController : MonoBehaviour
      [SerializeField] private Transform pathsParent;
      [SerializeField] private Transform pathPrefab;
      [SerializeField] private float spawnSpan = 10,pathMoveSpeed = 5f;
+     [SerializeField] private AudioClip comboSound, brick;
 
-     private bool _isSpawn=true;
+     private bool _pathCompleted = false;
      private int _path,_combo=0;
      private float _xDelta;
      private Transform _currentPath;
      private Vector3 _lastPathPosition,_lastPathScale;
 
+     public bool PathCompleted => _pathCompleted;
+     
      public PathEvent onPathPlaced = new PathEvent();
-
+     
      private void OnEnable()
      {
           _path = pathsParent.childCount - 1;
           _currentPath = pathsParent.GetChild(_path);
           _lastPathPosition = pathsParent.GetChild(_path - 1).localPosition;
           _lastPathScale = pathsParent.GetChild(_path - 1).localScale;
-          PlacePath();
           GameManager.Instance.OnLevelStart.AddListener(OnLevelStart);
      }
 
      private void OnLevelStart()
      {
           StartCoroutine(UpdateFrame());
+          PlacePath();
      }
 
      private IEnumerator UpdateFrame()
@@ -79,6 +82,7 @@ public class StackController : MonoBehaviour
           
           if (Mathf.Abs(_xDelta) < .1)
           {
+               AudioManager.Instance.PlaySound(comboSound,1+_combo*.2f);
                _combo++;
                _currentPath.localPosition = new Vector3(_lastPathPosition.x,0, _currentPath.localPosition.z);
           }
@@ -88,6 +92,7 @@ public class StackController : MonoBehaviour
                _currentPath.localPosition = new Vector3(_lastPathPosition.x+_xDelta*.5f,0, _currentPath.localPosition.z);
                _currentPath.localScale -= Vector3.right*Mathf.Abs(_xDelta);
                CreateRubble();
+               AudioManager.Instance.PlaySound(brick,1);
           }
           else
           {
@@ -97,8 +102,8 @@ public class StackController : MonoBehaviour
                return;
           }
           
-          onPathPlaced.Invoke(_currentPath.position);
-          if (_isSpawn)
+          onPathPlaced.Invoke(_currentPath.position,_combo);
+          if (!_pathCompleted)
           {
                SpawnPath();
           }
@@ -138,12 +143,11 @@ public class StackController : MonoBehaviour
 
      public void PathReachToFinish()
      {
-          _isSpawn = false;
+          _pathCompleted = true;
      }
 
      void LastPathPlaced()
      {
           pathMoveSpeed = 0;
-          GameManager.Instance.SuccessLevel();
      }
 }
