@@ -23,7 +23,7 @@ public class LevelManager : MonoBehaviour
     #endregion
     
     [SerializeField] private GameObject finishPath;
-    [SerializeField] private int[] levelLength;
+    [SerializeField] private int[] levelLengths;
 
     [HideInInspector] public Vector3 StartPathPos => _currentFinishPath.transform.position;
 
@@ -33,15 +33,30 @@ public class LevelManager : MonoBehaviour
     private void OnEnable()
     {
         GameManager.Instance.OnLevelStart.AddListener(OnLevelStart);
+        GameManager.Instance.OnLevelSuccess.AddListener(OnLevelSuccess);
     }
 
     private void OnLevelStart()
     {
         if (!_currentFinishPath)
         {
-            GameObject newFinish = Instantiate(finishPath,
-                Vector3.forward * levelLength[_level] * StackController.Instance.PathLength, Quaternion.identity);
+            Vector3 spawnPos = Vector3.forward * levelLengths[_level] * StackController.Instance.PathLength;
+            
+            GameObject newFinish = Instantiate(finishPath, spawnPos, Quaternion.identity);
+            _currentFinishPath = newFinish;
         }
+        else
+        {
+            Vector3 spawnPos = StartPathPos + Vector3.forward * levelLengths[_level] * StackController.Instance.PathLength;
+            
+            GameObject newFinish = Instantiate(finishPath, spawnPos, Quaternion.identity);
+            _currentFinishPath = newFinish;
+        }
+    }
 
+    private void OnLevelSuccess()
+    {
+        if (_level < levelLengths.Length - 1){_level++;}
+        else {_level = 0;}
     }
 }

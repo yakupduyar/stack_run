@@ -18,4 +18,9 @@ public class PlayerAnimator : MonoBehaviour
     {
         animator.SetBool("Dance",true);
     }
+
+    public void Run()
+    {
+        animator.SetBool("Dance",false);
+    }
 }

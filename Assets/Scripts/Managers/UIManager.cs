@@ -19,6 +19,7 @@ public class UIManager : MonoBehaviour
     private void OnLevelStart()
     {
         mainMenu.gameObject.SetActive(false);
+        successPanel.gameObject.SetActive(false);
     }
 
     private void OnLevelSuccess()

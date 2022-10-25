@@ -49,6 +49,7 @@ public class PlayerMove : MonoBehaviour
     {
         realMoveSpeed = moveSpeed;
         Player.Instance.Animator.SetSpeed(1);
+        Player.Instance.Animator.Run();
     }
 
     private void OnLevelSuccess()
