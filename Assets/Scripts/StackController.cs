@@ -1,3 +1,5 @@
+using System.Collections;
+using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.Events;
 
@@ -28,7 +30,8 @@ public class StackController : MonoBehaviour
      [SerializeField] private Transform pathsParent;
      [SerializeField] private Transform pathPrefab;
      [SerializeField] private float spawnSpan = 10,pathMoveSpeed = 5f;
-     
+
+     private bool _isSpawn=true;
      private int _path,_combo=0;
      private float _xDelta;
      private Transform _currentPath;
@@ -36,23 +39,33 @@ public class StackController : MonoBehaviour
 
      public PathEvent onPathPlaced = new PathEvent();
 
-     private void Awake()
+     private void OnEnable()
      {
           _path = pathsParent.childCount - 1;
           _currentPath = pathsParent.GetChild(_path);
           _lastPathPosition = pathsParent.GetChild(_path - 1).localPosition;
           _lastPathScale = pathsParent.GetChild(_path - 1).localScale;
           PlacePath();
+          GameManager.Instance.OnLevelStart.AddListener(OnLevelStart);
      }
 
-     private void Update()
+     private void OnLevelStart()
      {
-          if (Input.GetMouseButtonDown(0))
+          StartCoroutine(UpdateFrame());
+     }
+
+     private IEnumerator UpdateFrame()
+     {
+          while (true)
           {
-               SetSpawnSide();
-               PlacePath();
+               if (Input.GetMouseButtonDown(0))
+               {
+                    SetSpawnSide();
+                    PlacePath();
+               }
+               MovePath();
+               yield return null;
           }
-          MovePath();
      }
 
      private void MovePath()
@@ -78,12 +91,21 @@ public class StackController : MonoBehaviour
           }
           else
           {
-               print("FAIL");
+               pathMoveSpeed = 0;
+               _currentPath.AddComponent<Rigidbody>();
+               GameManager.Instance.FailLevel();
                return;
           }
           
           onPathPlaced.Invoke(_currentPath.position);
-          SpawnPath();
+          if (_isSpawn)
+          {
+               SpawnPath();
+          }
+          else
+          {
+               LastPathPlaced();
+          }
      }
 
      private void SpawnPath()
@@ -112,5 +134,16 @@ public class StackController : MonoBehaviour
      {
           spawnSpan *= -1;
           pathMoveSpeed *= -1;
+     }
+
+     public void PathReachToFinish()
+     {
+          _isSpawn = false;
+     }
+
+     void LastPathPlaced()
+     {
+          pathMoveSpeed = 0;
+          GameManager.Instance.SuccessLevel();
      }
 }
